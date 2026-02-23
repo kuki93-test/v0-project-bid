@@ -134,7 +134,7 @@ export default async function DashboardPage() {
 
   const { data: recentBids } = await supabase
     .from("bids")
-    .select("id, amount, created_at, listings(title, slug, current_bid, end_time)")
+    .select("id, amount, created_at, listings(title, slug, current_bid, auction_end)")
     .eq("bidder_id", user.id)
     .order("created_at", { ascending: false })
     .limit(5)
@@ -184,7 +184,7 @@ export default async function DashboardPage() {
         {recentBids && recentBids.length > 0 ? (
           <div className="rounded-lg border border-border">
             {recentBids.map((bid, i) => {
-              const listing = bid.listings as unknown as { title: string; slug: string; current_bid: number; end_time: string } | null
+              const listing = bid.listings as unknown as { title: string; slug: string; current_bid: number; auction_end: string } | null
               return (
                 <Link
                   key={bid.id}

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   // Fetch the listing
   const { data: listing, error: listingError } = await supabase
     .from("listings")
-    .select("id, seller_id, listing_type, starting_price, current_bid, status, end_time")
+    .select("id, seller_id, listing_type, starting_price, current_bid, status, auction_end, bid_count")
     .eq("id", listingId)
     .single()
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "This listing is no longer active" }, { status: 400 })
   }
 
-  if (new Date(listing.end_time) < new Date()) {
+  if (new Date(listing.auction_end) < new Date()) {
     return NextResponse.json({ error: "This auction has ended" }, { status: 400 })
   }
 

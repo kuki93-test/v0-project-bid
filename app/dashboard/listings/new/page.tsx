@@ -130,7 +130,7 @@ export default function CreateListingPage() {
     const startPriceCents = Math.round(parseFloat(startingPrice || "0") * 100)
     const buyNowCents = buyNowPrice ? Math.round(parseFloat(buyNowPrice) * 100) : null
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("listings")
       .insert({
         title: title.trim(),
@@ -144,16 +144,27 @@ export default function CreateListingPage() {
         buy_now_price: buyNowCents,
         current_bid: null,
         bid_count: 0,
-        end_time: endTime.toISOString(),
-        image_urls: imageUrls,
+        auction_end: endTime.toISOString(),
         shipping_info: shippingInfo.trim() || null,
         status: "active",
       })
+      .select("id")
+      .single()
 
-    if (error) {
-      toast.error(error.message || "Failed to create listing")
+    if (error || !inserted) {
+      toast.error(error?.message || "Failed to create listing")
       setLoading(false)
       return
+    }
+
+    // Insert images into listing_images table
+    if (imageUrls.length > 0) {
+      const imageRows = imageUrls.map((url, i) => ({
+        listing_id: inserted.id,
+        url,
+        position: i,
+      }))
+      await supabase.from("listing_images").insert(imageRows)
     }
 
     toast.success("Listing created successfully!")

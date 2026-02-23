@@ -46,6 +46,15 @@ export default async function ListingDetailPage({ params }: Props) {
 
   if (!listing) notFound()
 
+  // Get listing images
+  const { data: listingImages } = await supabase
+    .from("listing_images")
+    .select("url, position")
+    .eq("listing_id", listing.id)
+    .order("position", { ascending: true })
+
+  const imageUrls = listingImages?.map((img) => img.url) || []
+
   // Get recent bids
   const { data: bids } = await supabase
     .from("bids")
@@ -79,7 +88,7 @@ export default async function ListingDetailPage({ params }: Props) {
   const currentPrice = listing.current_bid || listing.starting_price
   const buyerCommission = settings?.buyer_commission_pct || 5
   const isOwner = user?.id === listing.seller_id
-  const isEnded = new Date(listing.end_time) < new Date()
+  const isEnded = new Date(listing.auction_end) < new Date()
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,9 +114,9 @@ export default async function ListingDetailPage({ params }: Props) {
           <div className="flex-1">
             {/* Image area */}
             <div className="mb-6 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
-              {listing.image_urls && (listing.image_urls as string[]).length > 0 ? (
+              {imageUrls.length > 0 ? (
                 <img
-                  src={(listing.image_urls as string[])[0]}
+                  src={imageUrls[0]}
                   alt={listing.title}
                   className="h-full w-full object-cover"
                 />
@@ -234,7 +243,7 @@ export default async function ListingDetailPage({ params }: Props) {
                 startingPrice={listing.starting_price}
                 buyNowPrice={listing.buy_now_price}
                 bidCount={listing.bid_count || 0}
-                endTime={listing.end_time}
+                endTime={listing.auction_end}
                 buyerCommissionPct={buyerCommission}
                 isLoggedIn={!!user}
                 isOwner={isOwner}

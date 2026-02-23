@@ -17,7 +17,7 @@ export default async function MyBidsPage() {
 
   const { data: bids } = await supabase
     .from("bids")
-    .select("id, amount, created_at, listings(title, slug, current_bid, end_time, status)")
+    .select("id, amount, created_at, listings(title, slug, current_bid, auction_end, status)")
     .eq("bidder_id", user.id)
     .order("created_at", { ascending: false })
 
@@ -30,9 +30,9 @@ export default async function MyBidsPage() {
       {bids && bids.length > 0 ? (
         <div className="flex flex-col gap-3">
           {bids.map((bid) => {
-            const listing = bid.listings as unknown as { title: string; slug: string; current_bid: number; end_time: string; status: string } | null
+            const listing = bid.listings as unknown as { title: string; slug: string; current_bid: number; auction_end: string; status: string } | null
             const isWinning = listing && bid.amount === listing.current_bid
-            const isEnded = listing ? new Date(listing.end_time) < new Date() : false
+            const isEnded = listing ? new Date(listing.auction_end) < new Date() : false
             return (
               <Link
                 key={bid.id}

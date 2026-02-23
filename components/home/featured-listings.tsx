@@ -19,7 +19,7 @@ export async function FeaturedListings() {
       current_bid,
       bid_count,
       condition,
-      end_time,
+      auction_end,
       categories(name)
     `)
     .eq("status", "active")
@@ -62,7 +62,7 @@ export async function FeaturedListings() {
                   currentPrice={listing.current_bid || listing.starting_price}
                   buyNowPrice={listing.buy_now_price}
                   listingType={listing.listing_type}
-                  endTime={listing.end_time}
+                  endTime={listing.auction_end}
                   bidCount={listing.bid_count || 0}
                   condition={listing.condition}
                   categoryName={category?.name}
