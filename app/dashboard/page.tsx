@@ -134,7 +134,7 @@ export default async function DashboardPage() {
 
   const { data: recentBids } = await supabase
     .from("bids")
-    .select("id, amount, created_at, listings(title, slug, current_bid, auction_end)")
+    .select("id, amount, created_at, listings(title, slug, current_bid, auction_end, status, winner_id)")
     .eq("bidder_id", user.id)
     .order("created_at", { ascending: false })
     .limit(5)
@@ -184,7 +184,26 @@ export default async function DashboardPage() {
         {recentBids && recentBids.length > 0 ? (
           <div className="rounded-lg border border-border">
             {recentBids.map((bid, i) => {
-              const listing = bid.listings as unknown as { title: string; slug: string; current_bid: number; auction_end: string } | null
+              const listing = bid.listings as unknown as { title: string; slug: string; current_bid: number; auction_end: string; status: string; winner_id: string | null } | null
+              const isEnded = listing ? listing.status !== "active" || new Date(listing.auction_end) < new Date() : false
+              const isWinner = listing?.winner_id === user.id
+              const isHighest = listing && bid.amount === listing.current_bid
+
+              let statusText = ""
+              let statusColor = "text-muted-foreground"
+              if (isEnded && (isWinner || isHighest)) {
+                statusText = "Won"
+                statusColor = "text-accent"
+              } else if (isEnded) {
+                statusText = listing?.status === "cancelled" ? "Cancelled" : "Lost"
+                statusColor = "text-destructive"
+              } else if (isHighest) {
+                statusText = "Winning"
+                statusColor = "text-accent"
+              } else {
+                statusText = "Outbid"
+              }
+
               return (
                 <Link
                   key={bid.id}
@@ -199,9 +218,12 @@ export default async function DashboardPage() {
                       {new Date(bid.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {formatCurrency(bid.amount)}
-                  </p>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-foreground">
+                      {formatCurrency(bid.amount)}
+                    </p>
+                    <p className={`text-xs font-medium ${statusColor}`}>{statusText}</p>
+                  </div>
                 </Link>
               )
             })}

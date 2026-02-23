@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/input-otp"
 import { toast } from "sonner"
 import { Loader2, CheckCircle2, Mail, Phone, ShieldAlert } from "lucide-react"
+import { PaymentMethods } from "@/components/dashboard/payment-methods"
 
 interface Profile {
   id: string
@@ -428,8 +429,11 @@ export default function ProfilePage() {
         </Card>
       )}
 
+      {/* Payment Methods - securely managed via Stripe */}
+      <PaymentMethods />
+
       {/* Edit profile */}
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle>Edit Profile</CardTitle>
           <CardDescription>Update your display name and contact information</CardDescription>
