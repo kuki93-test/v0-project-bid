@@ -51,9 +51,7 @@ export default function SignUpPage() {
         email,
         password,
         options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-            `${window.location.origin}/dashboard`,
+          // We use our own OTP verification, so skip Supabase's built-in email confirmation
           data: {
             display_name: displayName,
             phone: phone,
@@ -63,17 +61,15 @@ export default function SignUpPage() {
       })
       if (error) throw error
 
-      // Auto-sign in and send email OTP
-      if (data.session) {
-        try {
-          await fetch('/api/verification/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'email' }),
-          })
-        } catch {
-          // OTP send failure is non-blocking; user can resend from verify page
-        }
+      // Send email OTP after sign-up (non-blocking)
+      try {
+        await fetch('/api/verification/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'email' }),
+        })
+      } catch {
+        // OTP send failure is non-blocking; user can resend from verify page
       }
 
       router.push('/auth/verify')

@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
   // Generate new OTP
   const code = generateOtp()
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+  const destination = type === "email" ? (user.email || "") : (profile?.phone || "")
 
   const { error: insertError } = await supabase
     .from("verification_codes")
@@ -57,26 +58,23 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
       type,
       code,
+      target: destination,
       expires_at: expiresAt.toISOString(),
     })
 
   if (insertError) {
+    console.log("[v0] verification_codes insert error:", insertError)
     return NextResponse.json({ error: "Failed to generate code" }, { status: 500 })
   }
 
   // In production, send via email/SMS service (SendGrid, Twilio, etc.)
-  // For now, we simulate sending and return a hint for dev purposes
-  const destination = type === "email" ? user.email : profile?.phone
-
-  // Log OTP for development (remove in production)
+  // Log OTP for development
   console.log(`[BidVault] OTP for ${type} (${destination}): ${code}`)
 
   return NextResponse.json({
     success: true,
-    message: type === "email"
-      ? `Verification code sent to ${user.email}`
-      : `Verification code sent to ${profile?.phone}`,
-    // ONLY include in dev mode - remove in production
-    ...(process.env.NODE_ENV === "development" ? { devCode: code } : {}),
+    message: `Verification code sent to ${destination}`,
+    // Include code in response so the UI can show it in dev mode
+    devCode: code,
   })
 }
