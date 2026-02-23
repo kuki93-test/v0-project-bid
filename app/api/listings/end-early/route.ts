@@ -87,9 +87,34 @@ export async function POST(request: NextRequest) {
           userId: highestBid.bidder_id,
           type: "auction_won",
           listingId,
-          message: `You won the auction for "${listing.title}"! The seller ended the auction early.`,
+          title: "You won an auction!",
+          message: `You won the auction for "${listing.title}"! The seller ended the auction early. Please complete your payment.`,
         }),
       })
+
+      // Notify all losing bidders
+      const { data: allBids } = await supabase
+        .from("bids")
+        .select("bidder_id")
+        .eq("listing_id", listingId)
+        .neq("bidder_id", highestBid.bidder_id)
+
+      if (allBids) {
+        const uniqueLosers = [...new Set(allBids.map(b => b.bidder_id))]
+        for (const loserId of uniqueLosers) {
+          await fetch(new URL("/api/notifications/send", request.url), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: loserId,
+              type: "auction_lost",
+              listingId,
+              title: "Auction ended",
+              message: `The auction for "${listing.title}" has ended early. Unfortunately, you did not win.`,
+            }),
+          })
+        }
+      }
 
       return NextResponse.json({
         success: true,

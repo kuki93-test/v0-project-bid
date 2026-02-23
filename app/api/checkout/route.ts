@@ -50,7 +50,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Listing not found" }, { status: 404 })
   }
 
-  if (listing.status !== "active") {
+  // For auction wins, the listing is already sold/ended_early - verify the winner
+  if (type === "auction_win") {
+    if (!["sold", "ended_early"].includes(listing.status)) {
+      return NextResponse.json({ error: "This listing is not eligible for payment" }, { status: 400 })
+    }
+    if (listing.winner_id !== user.id) {
+      return NextResponse.json({ error: "You are not the winner of this auction" }, { status: 403 })
+    }
+  } else if (listing.status !== "active") {
     return NextResponse.json({ error: "This listing is no longer available" }, { status: 400 })
   }
 
@@ -71,8 +79,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This listing does not have a buy now price" }, { status: 400 })
     }
     itemPrice = listing.buy_now_price
+  } else if (type === "auction_win") {
+    // Won auction - use current bid (the winning price)
+    itemPrice = listing.current_bid || listing.starting_price
   } else {
-    // Auction win - use current bid
+    // Generic auction payment
     itemPrice = listing.current_bid || listing.starting_price
   }
 

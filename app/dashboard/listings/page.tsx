@@ -39,7 +39,7 @@ export default async function MyListingsPage() {
         <div className="flex flex-col gap-3">
           {listings.map((listing) => {
             const category = listing.categories as unknown as { name: string } | null
-            const isEnded = new Date(listing.auction_end) < new Date()
+            const isEnded = listing.status !== "active" || new Date(listing.auction_end) < new Date()
             return (
               <div
                 key={listing.id}
