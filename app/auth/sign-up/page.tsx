@@ -47,7 +47,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -62,7 +62,21 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
-      router.push('/auth/sign-up-success')
+
+      // Auto-sign in and send email OTP
+      if (data.session) {
+        try {
+          await fetch('/api/verification/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'email' }),
+          })
+        } catch {
+          // OTP send failure is non-blocking; user can resend from verify page
+        }
+      }
+
+      router.push('/auth/verify')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {

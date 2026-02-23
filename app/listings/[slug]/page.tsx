@@ -57,6 +57,17 @@ export default async function ListingDetailPage({ params }: Props) {
   // Get current user
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Get user's verification status
+  let isVerified = false
+  if (user) {
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("email_verified, phone_verified")
+      .eq("id", user.id)
+      .single()
+    isVerified = !!userProfile?.email_verified && !!userProfile?.phone_verified
+  }
+
   // Get platform settings for commission info
   const { data: settings } = await supabase
     .from("platform_settings")
@@ -229,6 +240,7 @@ export default async function ListingDetailPage({ params }: Props) {
                 isOwner={isOwner}
                 isEnded={isEnded}
                 userRole={user?.user_metadata?.role}
+                isVerified={isVerified}
               />
             </div>
           </div>

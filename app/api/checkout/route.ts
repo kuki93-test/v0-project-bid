@@ -14,6 +14,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Only buyer accounts can purchase items" }, { status: 403 })
   }
 
+  // Check email and phone verification
+  const { data: buyerProfile } = await supabase
+    .from("profiles")
+    .select("email_verified, phone_verified")
+    .eq("id", user.id)
+    .single()
+
+  if (!buyerProfile?.email_verified || !buyerProfile?.phone_verified) {
+    const missing = []
+    if (!buyerProfile?.email_verified) missing.push("email")
+    if (!buyerProfile?.phone_verified) missing.push("phone number")
+    return NextResponse.json(
+      { error: `Please verify your ${missing.join(" and ")} before making purchases. Go to Dashboard > Profile to verify.` },
+      { status: 403 }
+    )
+  }
+
   const body = await request.json()
   const { listingId, type } = body
 

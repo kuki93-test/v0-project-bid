@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Clock, Gavel, ShoppingCart, AlertCircle } from "lucide-react"
+import { Clock, Gavel, ShoppingCart, AlertCircle, ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 
@@ -39,6 +39,7 @@ interface BidPanelProps {
   isOwner: boolean
   isEnded: boolean
   userRole?: string
+  isVerified?: boolean
 }
 
 export function BidPanel({
@@ -54,6 +55,7 @@ export function BidPanel({
   isOwner,
   isEnded,
   userRole,
+  isVerified = false,
 }: BidPanelProps) {
   const router = useRouter()
   const [timeLeft, setTimeLeft] = useState(getTimeRemaining(endTime))
@@ -195,6 +197,19 @@ export function BidPanel({
         <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
           <AlertCircle className="h-4 w-4" />
           Only buyer accounts can place bids
+        </div>
+      ) : !isVerified ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <ShieldAlert className="h-4 w-4 text-destructive" />
+            Verification required
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Verify your email and phone number to place bids or buy items.
+          </p>
+          <Button variant="outline" size="sm" asChild className="mt-1 w-fit">
+            <Link href="/dashboard/profile">Go to Profile</Link>
+          </Button>
         </div>
       ) : isEnded ? (
         <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">

@@ -13,6 +13,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Only buyer accounts can place bids" }, { status: 403 })
   }
 
+  // Check email and phone verification
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email_verified, phone_verified")
+    .eq("id", user.id)
+    .single()
+
+  if (!profile?.email_verified || !profile?.phone_verified) {
+    const missing = []
+    if (!profile?.email_verified) missing.push("email")
+    if (!profile?.phone_verified) missing.push("phone number")
+    return NextResponse.json(
+      { error: `Please verify your ${missing.join(" and ")} before placing bids. Go to Dashboard > Profile to verify.` },
+      { status: 403 }
+    )
+  }
+
   const body = await request.json()
   const { listingId, amount } = body
 

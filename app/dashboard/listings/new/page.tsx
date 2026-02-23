@@ -16,7 +16,9 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { toast } from "sonner"
-import { Loader2, Upload, X, ImageIcon } from "lucide-react"
+import { Loader2, Upload, X, ImageIcon, ShieldAlert } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import Link from "next/link"
 
 interface Category {
   id: string
@@ -31,6 +33,8 @@ export default function CreateListingPage() {
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [verificationChecked, setVerificationChecked] = useState(false)
+  const [isVerified, setIsVerified] = useState(false)
 
   // Form state
   const [title, setTitle] = useState("")
@@ -44,11 +48,24 @@ export default function CreateListingPage() {
   const [shippingInfo, setShippingInfo] = useState("")
 
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadData = async () => {
+      // Load categories
       const { data } = await supabase.from("categories").select("id, name, slug").order("name")
       if (data) setCategories(data)
+
+      // Check verification status
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("email_verified, phone_verified")
+          .eq("id", user.id)
+          .single()
+        setIsVerified(!!profile?.email_verified && !!profile?.phone_verified)
+      }
+      setVerificationChecked(true)
     }
-    loadCategories()
+    loadData()
   }, [supabase])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,6 +165,19 @@ export default function CreateListingPage() {
       <h1 className="mb-6 font-[family-name:var(--font-heading)] text-2xl font-bold text-foreground">
         Create New Listing
       </h1>
+
+      {verificationChecked && !isVerified && (
+        <Alert variant="destructive" className="mb-6">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Verification required</AlertTitle>
+          <AlertDescription>
+            {"You must verify both your email and phone number before creating listings. "}
+            <Link href="/dashboard/profile" className="font-medium underline underline-offset-2">
+              Go to Profile Settings
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Basic info */}
@@ -340,12 +370,14 @@ export default function CreateListingPage() {
           </CardContent>
         </Card>
 
-        <Button type="submit" disabled={loading} className="w-full" size="lg">
+        <Button type="submit" disabled={loading || !isVerified} className="w-full" size="lg">
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Creating Listing...
             </>
+          ) : !isVerified ? (
+            "Verify email & phone to create listing"
           ) : (
             "Create Listing"
           )}
