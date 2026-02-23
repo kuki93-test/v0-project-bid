@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { stripe } from "@/lib/stripe"
+import { getSettings } from "@/lib/settings"
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -58,13 +59,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Get platform settings
-  const { data: settings } = await supabase
-    .from("platform_settings")
-    .select("*")
-    .single()
+  const settings = await getSettings()
 
-  const buyerCommissionPct = settings?.buyer_commission_pct || 5
-  const sellerCommissionPct = settings?.seller_commission_pct || 5
+  const buyerCommissionPct = settings.buyer_commission_rate
+  const sellerCommissionPct = settings.seller_commission_rate
 
   // Determine price based on type
   let itemPrice: number
@@ -89,7 +87,7 @@ export async function POST(request: NextRequest) {
     line_items: [
       {
         price_data: {
-          currency: settings?.currency?.toLowerCase() || "usd",
+          currency: settings.platform_currency.toLowerCase(),
           product_data: {
             name: listing.title,
             description: `Auction item - ${listing.condition} condition`,
@@ -100,7 +98,7 @@ export async function POST(request: NextRequest) {
       },
       {
         price_data: {
-          currency: settings?.currency?.toLowerCase() || "usd",
+          currency: settings.platform_currency.toLowerCase(),
           product_data: {
             name: `Buyer Commission (${buyerCommissionPct}%)`,
             description: "Platform service fee",

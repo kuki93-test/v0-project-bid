@@ -162,7 +162,7 @@ export default function CreateListingPage() {
       const imageRows = imageUrls.map((url, i) => ({
         listing_id: inserted.id,
         url,
-        position: i,
+        display_order: i,
       }))
       await supabase.from("listing_images").insert(imageRows)
     }

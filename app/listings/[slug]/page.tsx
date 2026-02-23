@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer"
 import { BidPanel } from "@/components/listings/bid-panel"
 import { Badge } from "@/components/ui/badge"
 import { Gavel, ShoppingCart, Clock, User, MapPin, Package } from "lucide-react"
+import { getSettings } from "@/lib/settings"
 import type { Metadata } from "next"
 
 function formatCurrency(cents: number) {
@@ -49,9 +50,9 @@ export default async function ListingDetailPage({ params }: Props) {
   // Get listing images
   const { data: listingImages } = await supabase
     .from("listing_images")
-    .select("url, position")
+    .select("url, display_order")
     .eq("listing_id", listing.id)
-    .order("position", { ascending: true })
+    .order("display_order", { ascending: true })
 
   const imageUrls = listingImages?.map((img) => img.url) || []
 
@@ -78,15 +79,12 @@ export default async function ListingDetailPage({ params }: Props) {
   }
 
   // Get platform settings for commission info
-  const { data: settings } = await supabase
-    .from("platform_settings")
-    .select("*")
-    .single()
+  const settings = await getSettings()
 
   const seller = listing.profiles as unknown as { id: string; display_name: string | null; avatar_url: string | null } | null
   const category = listing.categories as unknown as { name: string; slug: string } | null
   const currentPrice = listing.current_bid || listing.starting_price
-  const buyerCommission = settings?.buyer_commission_pct || 5
+  const buyerCommission = settings.buyer_commission_rate
   const isOwner = user?.id === listing.seller_id
   const isEnded = new Date(listing.auction_end) < new Date()
 
