@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const _inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const _spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" });
 
 export const metadata: Metadata = {
-  title: 'Arc - Ship faster with modern infrastructure',
-  description: 'The modern platform for teams who build. Automated workflows, seamless collaboration, and zero-config deployments.',
+  title: 'BidVault - Online Auction Marketplace',
+  description: 'The trusted online auction platform. Buy and sell with confidence. Secure payments, verified users, and transparent commissions.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#2a2520',
+  themeColor: '#1a1f3d',
 }
 
 export default function RootLayout({
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="en" className={`${_inter.variable} ${_spaceGrotesk.variable}`}>
       <body className="font-sans antialiased">
         {children}
+        <Toaster richColors position="top-right" />
         <Analytics />
       </body>
     </html>
