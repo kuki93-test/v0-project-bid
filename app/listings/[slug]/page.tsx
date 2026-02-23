@@ -86,7 +86,9 @@ export default async function ListingDetailPage({ params }: Props) {
   const currentPrice = listing.current_bid || listing.starting_price
   const buyerCommission = settings.buyer_commission_rate
   const isOwner = user?.id === listing.seller_id
-  const isEnded = new Date(listing.auction_end) < new Date()
+  const isNotActive = listing.status !== "active"
+  const isTimeExpired = new Date(listing.auction_end) < new Date()
+  const isEnded = isNotActive || isTimeExpired
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,6 +108,20 @@ export default async function ListingDetailPage({ params }: Props) {
           )}
           <span className="text-foreground">{listing.title}</span>
         </nav>
+
+        {isNotActive && (
+          <div className={`mb-6 rounded-lg border px-4 py-3 text-sm font-medium ${
+            listing.status === "sold"
+              ? "border-accent/30 bg-accent/10 text-accent"
+              : listing.status === "ended_early"
+                ? "border-amber-500/30 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400"
+                : "border-destructive/30 bg-destructive/10 text-destructive"
+          }`}>
+            {listing.status === "sold" && "This item has been sold."}
+            {listing.status === "ended_early" && "This auction was ended early by the seller."}
+            {listing.status === "cancelled" && "This listing has been cancelled."}
+          </div>
+        )}
 
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Left: Image + Description */}
@@ -141,7 +157,10 @@ export default async function ListingDetailPage({ params }: Props) {
                 </Badge>
               )}
               <Badge variant="outline" className="capitalize">{listing.condition.replace("_", " ")}</Badge>
-              {isEnded && <Badge variant="destructive">Ended</Badge>}
+              {listing.status === "sold" && <Badge variant="default" className="bg-accent text-accent-foreground">Sold</Badge>}
+              {listing.status === "ended_early" && <Badge variant="outline" className="border-amber-500 text-amber-600">Ended Early</Badge>}
+              {listing.status === "cancelled" && <Badge variant="destructive">Cancelled</Badge>}
+              {listing.status === "active" && isTimeExpired && <Badge variant="destructive">Ended</Badge>}
             </div>
 
             <h1 className="font-[family-name:var(--font-heading)] text-2xl font-bold text-foreground text-balance md:text-3xl">
@@ -246,6 +265,7 @@ export default async function ListingDetailPage({ params }: Props) {
                 isLoggedIn={!!user}
                 isOwner={isOwner}
                 isEnded={isEnded}
+                listingStatus={listing.status}
                 userRole={user?.user_metadata?.role}
                 isVerified={isVerified}
               />

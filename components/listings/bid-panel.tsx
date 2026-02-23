@@ -49,6 +49,7 @@ interface BidPanelProps {
   isLoggedIn: boolean
   isOwner: boolean
   isEnded: boolean
+  listingStatus?: string
   userRole?: string
   isVerified?: boolean
 }
@@ -65,6 +66,7 @@ export function BidPanel({
   isLoggedIn,
   isOwner,
   isEnded,
+  listingStatus = "active",
   userRole,
   isVerified = false,
 }: BidPanelProps) {
@@ -147,7 +149,10 @@ export function BidPanel({
         }`}>
           <Clock className="h-4 w-4" />
           <span className="text-sm font-medium">
-            {isEnded ? "Auction Ended" : `Ends in ${timeLeft}`}
+            {listingStatus === "sold" ? "Sold" :
+             listingStatus === "ended_early" ? "Ended Early" :
+             listingStatus === "cancelled" ? "Cancelled" :
+             isEnded ? "Auction Ended" : `Ends in ${timeLeft}`}
           </span>
         </div>
       )}
@@ -209,7 +214,7 @@ export function BidPanel({
             <AlertCircle className="h-4 w-4" />
             This is your listing
           </div>
-          {isAuction && !isEnded && (
+          {isAuction && !isEnded && listingStatus === "active" && (
             <EndEarlyButton listingId={listingId} onEnd={() => router.refresh()} />
           )}
         </div>
@@ -234,7 +239,10 @@ export function BidPanel({
       ) : isEnded ? (
         <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
           <AlertCircle className="h-4 w-4" />
-          This auction has ended
+          {listingStatus === "sold" ? "This item has been sold" :
+           listingStatus === "ended_early" ? "This auction was ended early" :
+           listingStatus === "cancelled" ? "This listing was cancelled" :
+           "This auction has ended"}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
