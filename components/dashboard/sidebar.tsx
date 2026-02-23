@@ -12,10 +12,12 @@ import {
   Plus,
   Package,
   DollarSign,
+  Shield,
 } from "lucide-react"
 
 interface DashboardSidebarProps {
   role: string
+  isAdmin?: boolean
 }
 
 const buyerLinks = [
@@ -34,7 +36,7 @@ const sellerLinks = [
   { href: "/dashboard/profile", label: "Profile", icon: User },
 ]
 
-export function DashboardSidebar({ role }: DashboardSidebarProps) {
+export function DashboardSidebar({ role, isAdmin = false }: DashboardSidebarProps) {
   const pathname = usePathname()
   const links = role === "seller" ? sellerLinks : buyerLinks
 
@@ -63,6 +65,19 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
             </Link>
           )
         })}
+
+        {isAdmin && (
+          <>
+            <div className="my-3 h-px bg-border" />
+            <Link
+              href="/admin"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-50 dark:hover:bg-amber-950/20"
+            >
+              <Shield className="h-4 w-4" />
+              Admin Panel
+            </Link>
+          </>
+        )}
       </nav>
     </aside>
   )

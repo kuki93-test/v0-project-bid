@@ -6,9 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Clock, Gavel, ShoppingCart, AlertCircle, ShieldAlert } from "lucide-react"
+import { Clock, Gavel, ShoppingCart, AlertCircle, ShieldAlert, StopCircle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100)
@@ -91,7 +102,11 @@ export function BidPanel({
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to place bid")
-      toast.success("Bid placed successfully!")
+      if (data.autoConfirmed) {
+        toast.success("Your bid matched the Buy Now price -- purchase confirmed!")
+      } else {
+        toast.success("Bid placed successfully!")
+      }
       setBidAmount("")
       router.refresh()
     } catch (err: unknown) {
@@ -189,9 +204,14 @@ export function BidPanel({
           </p>
         </div>
       ) : isOwner ? (
-        <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          <AlertCircle className="h-4 w-4" />
-          This is your listing
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+            <AlertCircle className="h-4 w-4" />
+            This is your listing
+          </div>
+          {isAuction && !isEnded && (
+            <EndEarlyButton listingId={listingId} onEnd={() => router.refresh()} />
+          )}
         </div>
       ) : !isBuyer ? (
         <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
@@ -259,5 +279,61 @@ export function BidPanel({
         </div>
       )}
     </div>
+  )
+}
+
+function EndEarlyButton({ listingId, onEnd }: { listingId: string; onEnd: () => void }) {
+  const [loading, setLoading] = useState(false)
+
+  const handleEndEarly = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/listings/end-early", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to end auction")
+      if (data.hasBids) {
+        toast.success(`Auction ended! Sold to the highest bidder. Early end fee: ${data.earlyEndFeePct}% applied.`)
+      } else {
+        toast.success("Auction ended early with no bids.")
+      }
+      onEnd()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to end auction")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm" className="w-full gap-2">
+          <StopCircle className="h-4 w-4" />
+          End Auction Early
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>End auction early?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {"Ending this auction early incurs a 2% fee on the current price. If there are bids, the item will be sold to the highest bidder. This action cannot be undone."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleEndEarly} disabled={loading}>
+            {loading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{"Ending..."}</>
+            ) : (
+              "Confirm End Early"
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

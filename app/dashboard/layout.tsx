@@ -17,11 +17,17 @@ export default async function DashboardLayout({
 
   const role = (user.user_metadata?.role as string) || "buyer"
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single()
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="mx-auto flex max-w-7xl gap-0 px-4 py-6 md:gap-8">
-        <DashboardSidebar role={role} />
+        <DashboardSidebar role={role} isAdmin={profile?.is_admin || false} />
         <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getSettings } from "@/lib/settings"
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
   // Fetch the listing
   const { data: listing, error: listingError } = await supabase
     .from("listings")
-    .select("id, seller_id, listing_type, starting_price, current_bid, status, auction_end, bid_count")
+    .select("id, seller_id, listing_type, starting_price, current_bid, buy_now_price, status, auction_end, bid_count")
     .eq("id", listingId)
     .single()
 
@@ -75,6 +76,12 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Check if bid meets or exceeds buy_now_price (auto-confirm)
+  const isBuyNowMatch =
+    listing.buy_now_price &&
+    (listing.listing_type === "auction" || listing.listing_type === "both") &&
+    amount >= listing.buy_now_price
+
   // Insert bid
   const { error: bidError } = await supabase
     .from("bids")
@@ -88,7 +95,49 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to place bid" }, { status: 500 })
   }
 
-  // Update listing current_bid and bid_count
+  if (isBuyNowMatch) {
+    // Auto-confirm: mark listing as sold with winner
+    await supabase
+      .from("listings")
+      .update({
+        current_bid: amount,
+        bid_count: (listing.bid_count ?? 0) + 1,
+        status: "sold",
+        winner_id: user.id,
+      })
+      .eq("id", listingId)
+
+    // Record transaction
+    const settings = await getSettings()
+    const buyerFee = Math.round(amount * (settings.buyer_commission_rate / 100))
+    const sellerFee = Math.round(amount * (settings.seller_commission_rate / 100))
+
+    await supabase.from("transactions").insert({
+      listing_id: listingId,
+      buyer_id: user.id,
+      seller_id: listing.seller_id,
+      amount,
+      buyer_commission: buyerFee,
+      seller_commission: sellerFee,
+      status: "completed",
+    })
+
+    // Send notification to seller
+    await fetch(new URL("/api/notifications/send", request.url), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: listing.seller_id,
+        type: "sale_confirmed",
+        listingId,
+        message: `Your item has been sold! A bid of ${(amount / 100).toFixed(2)} matched the Buy Now price.`,
+      }),
+    })
+
+    return NextResponse.json({ success: true, amount, autoConfirmed: true })
+  }
+
+  // Regular bid update
   const { error: updateError } = await supabase
     .from("listings")
     .update({
@@ -101,5 +150,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Bid placed but failed to update listing" }, { status: 500 })
   }
 
-  return NextResponse.json({ success: true, amount })
+  return NextResponse.json({ success: true, amount, autoConfirmed: false })
 }

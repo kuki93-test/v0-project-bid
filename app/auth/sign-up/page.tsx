@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Gavel, ShoppingCart, Store } from 'lucide-react'
+import { Turnstile } from '@marsidev/react-turnstile'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -24,6 +25,7 @@ export default function SignUpPage() {
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer')
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -46,7 +48,25 @@ export default function SignUpPage() {
       return
     }
 
+    if (!captchaToken) {
+      setError('Please complete the CAPTCHA verification')
+      setIsLoading(false)
+      return
+    }
+
     try {
+      // Verify CAPTCHA server-side
+      const captchaRes = await fetch('/api/captcha/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaToken }),
+      })
+      const captchaData = await captchaRes.json()
+      if (!captchaData.success) {
+        setError('CAPTCHA verification failed. Please try again.')
+        setIsLoading(false)
+        return
+      }
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -196,11 +216,20 @@ export default function SignUpPage() {
                     />
                   </div>
 
+                  <div className="flex justify-center">
+                    <Turnstile
+                      siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                      onSuccess={(token) => setCaptchaToken(token)}
+                      onExpire={() => setCaptchaToken(null)}
+                      options={{ theme: 'light', size: 'normal' }}
+                    />
+                  </div>
+
                   {error && (
                     <p className="text-sm text-destructive">{error}</p>
                   )}
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading || !captchaToken}>
                     {isLoading ? 'Creating account...' : 'Create account'}
                   </Button>
                 </div>

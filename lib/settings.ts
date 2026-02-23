@@ -7,7 +7,7 @@ export interface PlatformSettings {
   max_auction_duration_days: number
   platform_name: string
   platform_currency: string
-  early_end_fee_rate: number
+  early_end_fee_pct: number
 }
 
 const DEFAULTS: PlatformSettings = {
@@ -17,7 +17,7 @@ const DEFAULTS: PlatformSettings = {
   max_auction_duration_days: 30,
   platform_name: "BidVault",
   platform_currency: "USD",
-  early_end_fee_rate: 2,
+  early_end_fee_pct: 2,
 }
 
 export async function getSettings(): Promise<PlatformSettings> {
@@ -38,6 +38,6 @@ export async function getSettings(): Promise<PlatformSettings> {
     max_auction_duration_days: parseInt(map.max_auction_duration_days ?? String(DEFAULTS.max_auction_duration_days)),
     platform_name: map.platform_name ?? DEFAULTS.platform_name,
     platform_currency: map.platform_currency ?? DEFAULTS.platform_currency,
-    early_end_fee_rate: parseFloat(map.early_end_fee_rate ?? String(DEFAULTS.early_end_fee_rate)),
+    early_end_fee_pct: parseFloat(map.early_end_fee_pct ?? String(DEFAULTS.early_end_fee_pct)),
   }
 }
