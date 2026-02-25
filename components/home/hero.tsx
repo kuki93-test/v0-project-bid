@@ -67,7 +67,7 @@ export function Hero() {
               alt="Premium auction items including vintage watches and collectibles"
               width={600}
               height={400}
-              className="object-cover"
+              className="h-auto w-full object-cover"
               priority
             />
           </div>
