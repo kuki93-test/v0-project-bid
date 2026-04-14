@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { useParams } from "next/navigation"
 import { loadStripe } from "@stripe/stripe-js"
 import {
@@ -14,7 +14,7 @@ const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 )
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const params = useParams()
   const sessionId = params.sessionId as string
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -60,5 +60,19 @@ export default function CheckoutPage() {
         )}
       </main>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   )
 }
