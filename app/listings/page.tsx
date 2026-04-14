@@ -150,7 +150,9 @@ export default async function ListingsPage({ searchParams }: Props) {
           </p>
         </div>
 
-        <ListingsFilters categories={categories || []} />
+        <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+          <ListingsFilters categories={categories || []} />
+        </Suspense>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <Suspense
