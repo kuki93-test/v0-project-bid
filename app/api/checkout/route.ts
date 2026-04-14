@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
   // Get platform settings
   const settings = await getSettings()
 
-  const buyerCommissionPct = settings.buyer_commission_rate
-  const sellerCommissionPct = settings.seller_commission_rate
+  const taxPct = settings.tax_rate
+  const commissionPct = settings.commission_rate
 
   // Determine price based on type
   let itemPrice: number
@@ -87,9 +87,10 @@ export async function POST(request: NextRequest) {
     itemPrice = listing.current_bid || listing.starting_price
   }
 
-  const buyerFee = Math.round(itemPrice * (buyerCommissionPct / 100))
-  const sellerFee = Math.round(itemPrice * (sellerCommissionPct / 100))
-  const totalAmount = itemPrice + buyerFee
+  // Calculate fees: Item Price + 20% Tax + 15% Commission
+  const taxAmount = Math.round(itemPrice * (taxPct / 100))
+  const commissionAmount = Math.round(itemPrice * (commissionPct / 100))
+  const totalAmount = itemPrice + taxAmount + commissionAmount
 
   // Create Stripe checkout session
   const session = await stripe.checkout.sessions.create({
@@ -111,10 +112,21 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: settings.platform_currency.toLowerCase(),
           product_data: {
-            name: `Buyer Commission (${buyerCommissionPct}%)`,
+            name: `Tax (${taxPct}%)`,
+            description: "Value added tax",
+          },
+          unit_amount: taxAmount,
+        },
+        quantity: 1,
+      },
+      {
+        price_data: {
+          currency: settings.platform_currency.toLowerCase(),
+          product_data: {
+            name: `Commission (${commissionPct}%)`,
             description: "Platform service fee",
           },
-          unit_amount: buyerFee,
+          unit_amount: commissionAmount,
         },
         quantity: 1,
       },
@@ -124,8 +136,8 @@ export async function POST(request: NextRequest) {
       buyer_id: user.id,
       seller_id: listing.seller_id,
       item_price: itemPrice.toString(),
-      buyer_fee: buyerFee.toString(),
-      seller_fee: sellerFee.toString(),
+      tax_amount: taxAmount.toString(),
+      commission_amount: commissionAmount.toString(),
       total_amount: totalAmount.toString(),
       purchase_type: type,
     },

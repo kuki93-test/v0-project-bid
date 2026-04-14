@@ -84,7 +84,8 @@ export default async function ListingDetailPage({ params }: Props) {
   const seller = listing.profiles as unknown as { id: string; display_name: string | null; avatar_url: string | null } | null
   const category = listing.categories as unknown as { name: string; slug: string } | null
   const currentPrice = listing.current_bid || listing.starting_price
-  const buyerCommission = settings.buyer_commission_rate
+  const taxRate = settings.tax_rate
+  const commissionRate = settings.commission_rate
   const isOwner = user?.id === listing.seller_id
   const isNotActive = listing.status !== "active"
   const isTimeExpired = new Date(listing.auction_end) < new Date()
@@ -261,7 +262,8 @@ export default async function ListingDetailPage({ params }: Props) {
                 buyNowPrice={listing.buy_now_price}
                 bidCount={listing.bid_count || 0}
                 endTime={listing.auction_end}
-                buyerCommissionPct={buyerCommission}
+                taxPct={taxRate}
+                commissionPct={commissionRate}
                 isLoggedIn={!!user}
                 isOwner={isOwner}
                 isEnded={isEnded}

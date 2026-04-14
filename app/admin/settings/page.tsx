@@ -16,10 +16,9 @@ interface Setting {
 }
 
 const settingLabels: Record<string, { label: string; description: string; suffix: string }> = {
-  buyer_commission_rate: { label: "Buyer Commission Rate", description: "Percentage charged to buyers on each purchase", suffix: "%" },
-  seller_commission_rate: { label: "Seller Commission Rate", description: "Percentage charged to sellers on each sale", suffix: "%" },
-  early_end_fee_pct: { label: "Early End Fee", description: "Percentage fee for sellers who end auctions early", suffix: "%" },
-  platform_currency: { label: "Platform Currency", description: "Default currency code for listings", suffix: "" },
+  tax_rate: { label: "Tax Rate", description: "Value added tax percentage charged on each purchase", suffix: "%" },
+  commission_rate: { label: "Commission Rate", description: "Platform commission percentage charged on each purchase", suffix: "%" },
+  platform_currency: { label: "Platform Currency", description: "Default currency code for listings (e.g., EUR, USD)", suffix: "" },
 }
 
 export default function AdminSettingsPage() {

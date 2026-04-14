@@ -45,7 +45,8 @@ interface BidPanelProps {
   buyNowPrice: number | null
   bidCount: number
   endTime: string
-  buyerCommissionPct: number
+  taxPct: number
+  commissionPct: number
   isLoggedIn: boolean
   isOwner: boolean
   isEnded: boolean
@@ -62,7 +63,8 @@ export function BidPanel({
   buyNowPrice,
   bidCount,
   endTime,
-  buyerCommissionPct,
+  taxPct,
+  commissionPct,
   isLoggedIn,
   isOwner,
   isEnded,
@@ -138,7 +140,9 @@ export function BidPanel({
     }
   }
 
-  const commissionAmount = Math.round(currentPrice * (buyerCommissionPct / 100))
+  const taxAmount = Math.round(currentPrice * (taxPct / 100))
+  const commissionAmount = Math.round(currentPrice * (commissionPct / 100))
+  const totalAmount = currentPrice + taxAmount + commissionAmount
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">
@@ -186,15 +190,25 @@ export function BidPanel({
 
       <Separator className="my-4" />
 
-      {/* Commission info */}
+      {/* Price breakdown */}
       <div className="mb-4 rounded-lg bg-muted p-3">
-        <p className="text-xs text-muted-foreground">Buyer commission ({buyerCommissionPct}%)</p>
-        <p className="text-sm font-medium text-foreground">
-          {formatCurrency(commissionAmount)}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {"Total: "}{formatCurrency(currentPrice + commissionAmount)}
-        </p>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Item Price</span>
+          <span>{formatCurrency(currentPrice)}</span>
+        </div>
+        <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+          <span>Tax ({taxPct}%)</span>
+          <span>{formatCurrency(taxAmount)}</span>
+        </div>
+        <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+          <span>Commission ({commissionPct}%)</span>
+          <span>{formatCurrency(commissionAmount)}</span>
+        </div>
+        <Separator className="my-2" />
+        <div className="flex justify-between text-sm font-medium text-foreground">
+          <span>Total</span>
+          <span>{formatCurrency(totalAmount)}</span>
+        </div>
       </div>
 
       {/* Actions */}
@@ -304,7 +318,7 @@ function EndEarlyButton({ listingId, onEnd }: { listingId: string; onEnd: () => 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to end auction")
       if (data.hasBids) {
-        toast.success(`Auction ended! Sold to the highest bidder. Early end fee: ${data.earlyEndFeePct}% applied.`)
+        toast.success("Auction ended! Sold to the highest bidder.")
       } else {
         toast.success("Auction ended early with no bids.")
       }
@@ -328,7 +342,7 @@ function EndEarlyButton({ listingId, onEnd }: { listingId: string; onEnd: () => 
         <AlertDialogHeader>
           <AlertDialogTitle>End auction early?</AlertDialogTitle>
           <AlertDialogDescription>
-            {"Ending this auction early incurs a 2% fee on the current price. If there are bids, the item will be sold to the highest bidder. This action cannot be undone."}
+            {"If there are bids, the item will be sold to the highest bidder. This action cannot be undone."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

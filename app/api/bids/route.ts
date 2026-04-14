@@ -109,16 +109,16 @@ export async function POST(request: NextRequest) {
 
     // Record transaction
     const settings = await getSettings()
-    const buyerFee = Math.round(amount * (settings.buyer_commission_rate / 100))
-    const sellerFee = Math.round(amount * (settings.seller_commission_rate / 100))
+    const taxAmount = Math.round(amount * (settings.tax_rate / 100))
+    const commissionAmount = Math.round(amount * (settings.commission_rate / 100))
 
     await supabase.from("transactions").insert({
       listing_id: listingId,
       buyer_id: user.id,
       seller_id: listing.seller_id,
       amount,
-      buyer_commission: buyerFee,
-      seller_commission: sellerFee,
+      buyer_commission: taxAmount + commissionAmount,
+      seller_commission: 0,
       status: "completed",
     })
 

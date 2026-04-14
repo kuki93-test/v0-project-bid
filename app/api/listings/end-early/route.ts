@@ -41,9 +41,7 @@ export async function POST(request: NextRequest) {
   }
 
   const settings = await getSettings()
-  const earlyEndFeePct = settings.early_end_fee_pct
   const currentPrice = listing.current_bid || listing.starting_price
-  const earlyEndFee = Math.round(currentPrice * (earlyEndFeePct / 100))
 
   // If there are bids, sell to the highest bidder
   if (listing.bid_count > 0 && listing.current_bid) {
@@ -57,8 +55,8 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (highestBid) {
-      const sellerFee = Math.round(listing.current_bid * (settings.seller_commission_rate / 100))
-      const buyerFee = Math.round(listing.current_bid * (settings.buyer_commission_rate / 100))
+      const taxAmount = Math.round(listing.current_bid * (settings.tax_rate / 100))
+      const commissionAmount = Math.round(listing.current_bid * (settings.commission_rate / 100))
 
       await supabase
         .from("listings")
@@ -68,14 +66,14 @@ export async function POST(request: NextRequest) {
         })
         .eq("id", listingId)
 
-      // Record transaction with early end fee added to seller commission
+      // Record transaction
       await supabase.from("transactions").insert({
         listing_id: listingId,
         buyer_id: highestBid.bidder_id,
         seller_id: user.id,
         amount: listing.current_bid,
-        buyer_commission: buyerFee,
-        seller_commission: sellerFee + earlyEndFee,
+        buyer_commission: taxAmount + commissionAmount,
+        seller_commission: 0,
         status: "completed",
       })
 
@@ -120,8 +118,6 @@ export async function POST(request: NextRequest) {
         success: true,
         hasBids: true,
         winnerId: highestBid.bidder_id,
-        earlyEndFee,
-        earlyEndFeePct,
       })
     }
   }
@@ -135,7 +131,5 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     success: true,
     hasBids: false,
-    earlyEndFee: 0,
-    earlyEndFeePct,
   })
 }
