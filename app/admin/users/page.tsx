@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { Search, Ban, CheckCircle, Shield, ShieldOff } from "lucide-react"
+import { Search, Ban, CheckCircle } from "lucide-react"
 
 interface UserProfile {
   id: string
@@ -61,19 +61,7 @@ export default function AdminUsersPage() {
     fetchUsers()
   }
 
-  const toggleAdmin = async (userId: string, currentAdmin: boolean) => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({ is_admin: !currentAdmin })
-      .eq("id", userId)
 
-    if (error) {
-      toast.error("Failed to update admin status")
-      return
-    }
-    toast.success(currentAdmin ? "Admin access removed" : "Admin access granted")
-    fetchUsers()
-  }
 
   return (
     <div>
@@ -149,26 +137,15 @@ export default function AdminUsersPage() {
                         {new Date(user.created_at).toLocaleDateString()}
                       </td>
                       <td className="py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant={user.banned ? "outline" : "destructive"}
-                            size="sm"
-                            onClick={() => toggleBan(user.id, user.banned)}
-                            className="gap-1"
-                          >
-                            {user.banned ? <CheckCircle className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
-                            {user.banned ? "Unban" : "Ban"}
-                          </Button>
-                          <Button
-                            variant={user.is_admin ? "secondary" : "outline"}
-                            size="sm"
-                            onClick={() => toggleAdmin(user.id, user.is_admin)}
-                            className="gap-1"
-                          >
-                            {user.is_admin ? <ShieldOff className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-                            {user.is_admin ? "Remove Admin" : "Make Admin"}
-                          </Button>
-                        </div>
+                        <Button
+                          variant={user.banned ? "outline" : "destructive"}
+                          size="sm"
+                          onClick={() => toggleBan(user.id, user.banned)}
+                          className="gap-1"
+                        >
+                          {user.banned ? <CheckCircle className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
+                          {user.banned ? "Unban" : "Ban"}
+                        </Button>
                       </td>
                     </tr>
                   ))}

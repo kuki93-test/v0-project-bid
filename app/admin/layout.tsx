@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AdminSidebar } from "@/components/admin/sidebar"
+import { isAdminEmail } from "@/lib/admin"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -8,13 +9,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect("/auth/login")
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .single()
-
-  if (!profile?.is_admin) redirect("/dashboard")
+  // Only @willbieten.net email addresses have admin access
+  if (!isAdminEmail(user.email)) redirect("/dashboard")
 
   return (
     <div className="flex min-h-svh">

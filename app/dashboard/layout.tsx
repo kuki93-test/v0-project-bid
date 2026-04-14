@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardWrapper } from "@/components/dashboard/dashboard-wrapper"
 import { Navbar } from "@/components/navbar"
+import { isAdminEmail } from "@/lib/admin"
 
 export default async function DashboardLayout({
   children,
@@ -15,17 +16,14 @@ export default async function DashboardLayout({
     redirect("/auth/login")
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .single()
+  // Check if user has admin access based on email domain
+  const isAdmin = isAdminEmail(user.email)
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <DashboardWrapper isAdmin={profile?.is_admin || false}>
+        <DashboardWrapper isAdmin={isAdmin}>
           {children}
         </DashboardWrapper>
       </div>
