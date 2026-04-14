@@ -454,12 +454,18 @@ export default function SignUpPage() {
 
                   {/* CAPTCHA and Submit */}
                   <div className="flex justify-center pt-2">
-                    <Turnstile
-                      siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "1x00000000000000000000AA"}
-                      onSuccess={(token) => setCaptchaToken(token)}
-                      onExpire={() => setCaptchaToken(null)}
-                      options={{ theme: "light", size: "normal" }}
-                    />
+                    {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? (
+                      <Turnstile
+                        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                        onSuccess={(token) => setCaptchaToken(token)}
+                        onExpire={() => setCaptchaToken(null)}
+                        options={{ theme: "light", size: "normal" }}
+                      />
+                    ) : (
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                        CAPTCHA not configured. Contact administrator.
+                      </div>
+                    )}
                   </div>
 
                   {error && (
