@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Gavel, User, Building2, Upload, CheckCircle2, Loader2, AlertCircle, ShoppingCart, Store } from "lucide-react"
+
+import { Gavel, User, Building2, Upload, CheckCircle2, Loader2, AlertCircle } from "lucide-react"
 import { Turnstile } from "@marsidev/react-turnstile"
 
 export default function SignUpPage() {
@@ -35,7 +35,6 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [phone, setPhone] = useState("")
-  const [role, setRole] = useState<"buyer" | "seller">("buyer")
 
   // Company fields
   const [companyName, setCompanyName] = useState("")
@@ -153,7 +152,6 @@ export default function SignUpPage() {
           data: {
             display_name: displayName || email.split("@")[0],
             phone,
-            role: accountType === "company" ? "seller" : role,
             account_type: accountType,
           },
         },
@@ -320,43 +318,9 @@ export default function SignUpPage() {
 
                   {/* Personal Account Fields */}
                   <TabsContent value="personal" className="mt-0 space-y-4">
-                    <div className="grid gap-2">
-                      <Label>I want to</Label>
-                      <RadioGroup
-                        value={role}
-                        onValueChange={(v) => setRole(v as "buyer" | "seller")}
-                        className="grid grid-cols-2 gap-3"
-                      >
-                        <Label
-                          htmlFor="role-buyer"
-                          className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
-                            role === "buyer"
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-muted-foreground/30"
-                          }`}
-                        >
-                          <RadioGroupItem value="buyer" id="role-buyer" className="sr-only" />
-                          <ShoppingCart className="h-6 w-6" />
-                          <span className="text-sm font-medium">Buy items</span>
-                        </Label>
-                        <Label
-                          htmlFor="role-seller"
-                          className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
-                            role === "seller"
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-muted-foreground/30"
-                          }`}
-                        >
-                          <RadioGroupItem value="seller" id="role-seller" className="sr-only" />
-                          <Store className="h-6 w-6" />
-                          <span className="text-sm font-medium">Sell items</span>
-                        </Label>
-                      </RadioGroup>
-                    </div>
-
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/30">
                       <p className="text-sm text-amber-800 dark:text-amber-200">
-                        Personal accounts require email and phone verification before you can bid or sell.
+                        Personal accounts require email and phone verification. Once verified, you can both buy and sell items on the platform.
                       </p>
                     </div>
                   </TabsContent>

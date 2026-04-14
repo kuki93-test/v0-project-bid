@@ -13,11 +13,15 @@ import {
   Package,
   DollarSign,
   Shield,
+  ShoppingCart,
+  Store,
 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 
 interface DashboardSidebarProps {
-  role: string
   isAdmin?: boolean
+  mode: "buying" | "selling"
+  onModeChange: (mode: "buying" | "selling") => void
 }
 
 const buyerLinks = [
@@ -36,15 +40,48 @@ const sellerLinks = [
   { href: "/dashboard/profile", label: "Profile", icon: User },
 ]
 
-export function DashboardSidebar({ role, isAdmin = false }: DashboardSidebarProps) {
+export function DashboardSidebar({ isAdmin = false, mode, onModeChange }: DashboardSidebarProps) {
   const pathname = usePathname()
-  const links = role === "seller" ? sellerLinks : buyerLinks
+  const links = mode === "selling" ? sellerLinks : buyerLinks
 
   return (
     <aside className="hidden w-56 shrink-0 md:block">
       <nav className="sticky top-24 flex flex-col gap-1">
+        {/* Mode Toggle */}
+        <div className="mb-4 rounded-lg border border-border bg-card p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Mode
+          </p>
+          <div className="flex items-center justify-between gap-3">
+            <button
+              onClick={() => onModeChange("buying")}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-1 rounded-md p-2 text-xs font-medium transition-colors",
+                mode === "buying"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Buying
+            </button>
+            <button
+              onClick={() => onModeChange("selling")}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-1 rounded-md p-2 text-xs font-medium transition-colors",
+                mode === "selling"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary"
+              )}
+            >
+              <Store className="h-4 w-4" />
+              Selling
+            </button>
+          </div>
+        </div>
+
         <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {role === "seller" ? "Seller" : "Buyer"} Dashboard
+          {mode === "selling" ? "Seller" : "Buyer"} Dashboard
         </p>
         {links.map((link) => {
           const isActive = pathname === link.href || 

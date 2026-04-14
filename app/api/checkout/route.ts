@@ -11,10 +11,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
 
-  if (user.user_metadata?.role !== "buyer") {
-    return NextResponse.json({ error: "Only buyer accounts can purchase items" }, { status: 403 })
-  }
-
   // Check email and phone verification
   const { data: buyerProfile } = await supabase
     .from("profiles")

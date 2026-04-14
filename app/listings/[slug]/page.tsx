@@ -268,7 +268,6 @@ export default async function ListingDetailPage({ params }: Props) {
                 isOwner={isOwner}
                 isEnded={isEnded}
                 listingStatus={listing.status}
-                userRole={user?.user_metadata?.role}
                 isVerified={isVerified}
               />
             </div>

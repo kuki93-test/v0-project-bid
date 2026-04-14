@@ -51,7 +51,6 @@ interface BidPanelProps {
   isOwner: boolean
   isEnded: boolean
   listingStatus?: string
-  userRole?: string
   isVerified?: boolean
 }
 
@@ -69,7 +68,6 @@ export function BidPanel({
   isOwner,
   isEnded,
   listingStatus = "active",
-  userRole,
   isVerified = false,
 }: BidPanelProps) {
   const router = useRouter()
@@ -80,7 +78,6 @@ export function BidPanel({
   const minBid = currentPrice + 100 // At least $1 more than current
   const isAuction = listingType === "auction" || listingType === "both"
   const hasBuyNow = listingType === "buy_now" || listingType === "both"
-  const isBuyer = userRole === "buyer"
 
   useEffect(() => {
     if (isEnded) return
@@ -231,11 +228,6 @@ export function BidPanel({
           {isAuction && !isEnded && listingStatus === "active" && (
             <EndEarlyButton listingId={listingId} onEnd={() => router.refresh()} />
           )}
-        </div>
-      ) : !isBuyer ? (
-        <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          <AlertCircle className="h-4 w-4" />
-          Only buyer accounts can place bids
         </div>
       ) : !isVerified ? (
         <div className="flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">

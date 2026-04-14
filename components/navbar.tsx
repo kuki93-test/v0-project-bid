@@ -73,8 +73,6 @@ export function Navbar() {
     router.refresh()
   }
 
-  const userRole = user?.user_metadata?.role as string | undefined
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
@@ -192,17 +190,13 @@ export function Navbar() {
                     Profile
                   </Link>
                 </DropdownMenuItem>
-                {userRole === "seller" && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard/listings/new" className="flex items-center gap-2">
-                        <Gavel className="h-4 w-4" />
-                        Create Listing
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/listings/new" className="flex items-center gap-2">
+                    <Gavel className="h-4 w-4" />
+                    Create Listing
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2 text-destructive">
                   <LogOut className="h-4 w-4" />
