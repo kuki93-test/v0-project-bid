@@ -45,7 +45,7 @@ async function ListingsGrid({
       current_bid,
       bid_count,
       condition,
-      end_time,
+      auction_end,
       categories(name)
     `)
     .eq("status", "active")
@@ -85,7 +85,7 @@ async function ListingsGrid({
       query = query.order("starting_price", { ascending: false })
       break
     case "ending_soon":
-      query = query.order("end_time", { ascending: true })
+      query = query.order("auction_end", { ascending: true })
       break
     default:
       query = query.order("created_at", { ascending: false })
@@ -118,7 +118,7 @@ async function ListingsGrid({
             currentPrice={listing.current_bid || listing.starting_price}
             buyNowPrice={listing.buy_now_price}
             listingType={listing.listing_type}
-            endTime={listing.end_time}
+            endTime={listing.auction_end}
             bidCount={listing.bid_count || 0}
             condition={listing.condition}
             categoryName={category?.name}
@@ -150,7 +150,9 @@ export default async function ListingsPage({ searchParams }: Props) {
           </p>
         </div>
 
-        <ListingsFilters categories={categories || []} />
+        <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+          <ListingsFilters categories={categories || []} />
+        </Suspense>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <Suspense

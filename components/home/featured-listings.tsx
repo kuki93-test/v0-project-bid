@@ -19,7 +19,7 @@ export async function FeaturedListings() {
       current_bid,
       bid_count,
       condition,
-      end_time,
+      auction_end,
       categories(name)
     `)
     .eq("status", "active")
@@ -62,7 +62,7 @@ export async function FeaturedListings() {
                   currentPrice={listing.current_bid || listing.starting_price}
                   buyNowPrice={listing.buy_now_price}
                   listingType={listing.listing_type}
-                  endTime={listing.end_time}
+                  endTime={listing.auction_end}
                   bidCount={listing.bid_count || 0}
                   condition={listing.condition}
                   categoryName={category?.name}
@@ -74,7 +74,7 @@ export async function FeaturedListings() {
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
             <p className="text-lg font-medium text-foreground">No listings yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Be the first to list an item on BidVault
+              Be the first to list an item on Willbieten
             </p>
             <Button asChild className="mt-4">
               <Link href="/auth/sign-up">Become a Seller</Link>

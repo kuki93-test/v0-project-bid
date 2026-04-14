@@ -17,7 +17,7 @@ export default async function MyListingsPage() {
 
   const { data: listings } = await supabase
     .from("listings")
-    .select("id, title, slug, status, listing_type, starting_price, buy_now_price, current_bid, bid_count, end_time, created_at, categories(name)")
+    .select("id, title, slug, status, listing_type, starting_price, buy_now_price, current_bid, bid_count, auction_end, created_at, categories(name)")
     .eq("seller_id", user.id)
     .order("created_at", { ascending: false })
 
@@ -39,7 +39,7 @@ export default async function MyListingsPage() {
         <div className="flex flex-col gap-3">
           {listings.map((listing) => {
             const category = listing.categories as unknown as { name: string } | null
-            const isEnded = new Date(listing.end_time) < new Date()
+            const isEnded = listing.status !== "active" || new Date(listing.auction_end) < new Date()
             return (
               <div
                 key={listing.id}

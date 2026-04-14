@@ -18,7 +18,7 @@ export default function SignUpSuccessPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
               <Gavel className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-[family-name:var(--font-heading)] text-xl font-bold">BidVault</span>
+            <span className="font-[family-name:var(--font-heading)] text-xl font-bold">Willbieten</span>
           </Link>
           <Card className="w-full">
             <CardHeader className="text-center">
@@ -27,16 +27,21 @@ export default function SignUpSuccessPage() {
               </div>
               <CardTitle className="text-2xl">Check your email</CardTitle>
               <CardDescription>
-                {"We've sent you a confirmation link"}
+                {"We've sent you a verification code"}
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <p className="mb-4 text-sm text-muted-foreground">
-                {"Click the link in your email to verify your account and start using BidVault. The link will expire in 24 hours."}
+                {"Please check your inbox for a 6-digit verification code. You'll need to verify both your email and phone number before you can start bidding or listing items."}
               </p>
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/auth/login">Back to sign in</Link>
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button className="w-full" asChild>
+                  <Link href="/auth/verify">Enter verification code</Link>
+                </Button>
+                <Button variant="outline" className="w-full" asChild>
+                  <Link href="/auth/login">Back to sign in</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

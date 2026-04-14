@@ -17,7 +17,7 @@ export default async function MyBidsPage() {
 
   const { data: bids } = await supabase
     .from("bids")
-    .select("id, amount, created_at, listings(title, slug, current_bid, end_time, status)")
+    .select("id, amount, created_at, listings(title, slug, current_bid, auction_end, status, winner_id)")
     .eq("bidder_id", user.id)
     .order("created_at", { ascending: false })
 
@@ -30,9 +30,37 @@ export default async function MyBidsPage() {
       {bids && bids.length > 0 ? (
         <div className="flex flex-col gap-3">
           {bids.map((bid) => {
-            const listing = bid.listings as unknown as { title: string; slug: string; current_bid: number; end_time: string; status: string } | null
-            const isWinning = listing && bid.amount === listing.current_bid
-            const isEnded = listing ? new Date(listing.end_time) < new Date() : false
+            const listing = bid.listings as unknown as { title: string; slug: string; current_bid: number; auction_end: string; status: string; winner_id: string | null } | null
+            const isHighestBid = listing && bid.amount === listing.current_bid
+            const isNotActive = listing ? listing.status !== "active" : false
+            const isTimeExpired = listing ? new Date(listing.auction_end) < new Date() : false
+            const isEnded = isNotActive || isTimeExpired
+            const isWinner = listing?.winner_id === user.id
+
+            let statusLabel: string
+            let statusVariant: "default" | "secondary" | "destructive" | "outline" = "secondary"
+            let statusClass = ""
+
+            if (isEnded && isWinner) {
+              statusLabel = "Won"
+              statusVariant = "default"
+              statusClass = "bg-accent text-accent-foreground"
+            } else if (isEnded && !isWinner && isHighestBid) {
+              // Highest bid but not the winner (edge case)
+              statusLabel = "Won"
+              statusVariant = "default"
+              statusClass = "bg-accent text-accent-foreground"
+            } else if (isEnded && !isWinner) {
+              statusLabel = listing?.status === "cancelled" ? "Cancelled" : "Lost"
+              statusVariant = "destructive"
+            } else if (isHighestBid && !isEnded) {
+              statusLabel = "Winning"
+              statusClass = "bg-accent text-accent-foreground"
+            } else {
+              statusLabel = "Outbid"
+              statusVariant = "secondary"
+            }
+
             return (
               <Link
                 key={bid.id}
@@ -43,9 +71,10 @@ export default async function MyBidsPage() {
                   <p className="text-sm font-semibold text-foreground">{listing?.title || "Unknown Listing"}</p>
                   <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{new Date(bid.created_at).toLocaleString()}</span>
-                    {isWinning && !isEnded && <Badge className="bg-accent text-accent-foreground text-xs">Winning</Badge>}
-                    {isWinning && isEnded && <Badge className="text-xs">Won</Badge>}
-                    {!isWinning && <Badge variant="secondary" className="text-xs">Outbid</Badge>}
+                    <Badge variant={statusVariant} className={`text-xs ${statusClass}`}>{statusLabel}</Badge>
+                    {isEnded && listing?.status === "ended_early" && (
+                      <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">Ended Early</Badge>
+                    )}
                   </div>
                 </div>
                 <p className="font-[family-name:var(--font-heading)] text-sm font-bold text-foreground">

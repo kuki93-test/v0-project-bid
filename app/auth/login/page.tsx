@@ -13,10 +13,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { Gavel } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +53,7 @@ export default function LoginPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
               <Gavel className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-[family-name:var(--font-heading)] text-xl font-bold">BidVault</span>
+            <span className="font-[family-name:var(--font-heading)] text-xl font-bold">Willbieten</span>
           </Link>
           <Card className="w-full">
             <CardHeader>
@@ -108,5 +108,32 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-svh w-full items-center justify-center bg-secondary p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <div className="flex flex-col items-center gap-6">
+            <div className="flex items-center gap-2 text-foreground">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+                <Gavel className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="font-[family-name:var(--font-heading)] text-xl font-bold">Willbieten</span>
+            </div>
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle className="text-2xl">Welcome back</CardTitle>
+                <CardDescription>Loading...</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

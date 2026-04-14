@@ -6,9 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Clock, Gavel, ShoppingCart, AlertCircle } from "lucide-react"
+import { Clock, Gavel, ShoppingCart, AlertCircle, ShieldAlert, StopCircle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100)
@@ -34,11 +45,13 @@ interface BidPanelProps {
   buyNowPrice: number | null
   bidCount: number
   endTime: string
-  buyerCommissionPct: number
+  taxPct: number
+  commissionPct: number
   isLoggedIn: boolean
   isOwner: boolean
   isEnded: boolean
-  userRole?: string
+  listingStatus?: string
+  isVerified?: boolean
 }
 
 export function BidPanel({
@@ -49,11 +62,13 @@ export function BidPanel({
   buyNowPrice,
   bidCount,
   endTime,
-  buyerCommissionPct,
+  taxPct,
+  commissionPct,
   isLoggedIn,
   isOwner,
   isEnded,
-  userRole,
+  listingStatus = "active",
+  isVerified = false,
 }: BidPanelProps) {
   const router = useRouter()
   const [timeLeft, setTimeLeft] = useState(getTimeRemaining(endTime))
@@ -63,7 +78,6 @@ export function BidPanel({
   const minBid = currentPrice + 100 // At least $1 more than current
   const isAuction = listingType === "auction" || listingType === "both"
   const hasBuyNow = listingType === "buy_now" || listingType === "both"
-  const isBuyer = userRole === "buyer"
 
   useEffect(() => {
     if (isEnded) return
@@ -89,7 +103,11 @@ export function BidPanel({
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to place bid")
-      toast.success("Bid placed successfully!")
+      if (data.autoConfirmed) {
+        toast.success("Your bid matched the Buy Now price -- purchase confirmed!")
+      } else {
+        toast.success("Bid placed successfully!")
+      }
       setBidAmount("")
       router.refresh()
     } catch (err: unknown) {
@@ -119,7 +137,9 @@ export function BidPanel({
     }
   }
 
-  const commissionAmount = Math.round(currentPrice * (buyerCommissionPct / 100))
+  const taxAmount = Math.round(currentPrice * (taxPct / 100))
+  const commissionAmount = Math.round(currentPrice * (commissionPct / 100))
+  const totalAmount = currentPrice + taxAmount + commissionAmount
 
   return (
     <div className="rounded-xl border border-border bg-card p-6">
@@ -130,7 +150,10 @@ export function BidPanel({
         }`}>
           <Clock className="h-4 w-4" />
           <span className="text-sm font-medium">
-            {isEnded ? "Auction Ended" : `Ends in ${timeLeft}`}
+            {listingStatus === "sold" ? "Sold" :
+             listingStatus === "ended_early" ? "Ended Early" :
+             listingStatus === "cancelled" ? "Cancelled" :
+             isEnded ? "Auction Ended" : `Ends in ${timeLeft}`}
           </span>
         </div>
       )}
@@ -164,15 +187,25 @@ export function BidPanel({
 
       <Separator className="my-4" />
 
-      {/* Commission info */}
+      {/* Price breakdown */}
       <div className="mb-4 rounded-lg bg-muted p-3">
-        <p className="text-xs text-muted-foreground">Buyer commission ({buyerCommissionPct}%)</p>
-        <p className="text-sm font-medium text-foreground">
-          {formatCurrency(commissionAmount)}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {"Total: "}{formatCurrency(currentPrice + commissionAmount)}
-        </p>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Item Price</span>
+          <span>{formatCurrency(currentPrice)}</span>
+        </div>
+        <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+          <span>Tax ({taxPct}%)</span>
+          <span>{formatCurrency(taxAmount)}</span>
+        </div>
+        <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+          <span>Commission ({commissionPct}%)</span>
+          <span>{formatCurrency(commissionAmount)}</span>
+        </div>
+        <Separator className="my-2" />
+        <div className="flex justify-between text-sm font-medium text-foreground">
+          <span>Total</span>
+          <span>{formatCurrency(totalAmount)}</span>
+        </div>
       </div>
 
       {/* Actions */}
@@ -187,19 +220,35 @@ export function BidPanel({
           </p>
         </div>
       ) : isOwner ? (
-        <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          <AlertCircle className="h-4 w-4" />
-          This is your listing
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+            <AlertCircle className="h-4 w-4" />
+            This is your listing
+          </div>
+          {isAuction && !isEnded && listingStatus === "active" && (
+            <EndEarlyButton listingId={listingId} onEnd={() => router.refresh()} />
+          )}
         </div>
-      ) : !isBuyer ? (
-        <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          <AlertCircle className="h-4 w-4" />
-          Only buyer accounts can place bids
+      ) : !isVerified ? (
+        <div className="flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <ShieldAlert className="h-4 w-4 text-destructive" />
+            Verification required
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Verify your email and phone number to place bids or buy items.
+          </p>
+          <Button variant="outline" size="sm" asChild className="mt-1 w-fit">
+            <Link href="/dashboard/profile">Go to Profile</Link>
+          </Button>
         </div>
       ) : isEnded ? (
         <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
           <AlertCircle className="h-4 w-4" />
-          This auction has ended
+          {listingStatus === "sold" ? "This item has been sold" :
+           listingStatus === "ended_early" ? "This auction was ended early" :
+           listingStatus === "cancelled" ? "This listing was cancelled" :
+           "This auction has ended"}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -244,5 +293,61 @@ export function BidPanel({
         </div>
       )}
     </div>
+  )
+}
+
+function EndEarlyButton({ listingId, onEnd }: { listingId: string; onEnd: () => void }) {
+  const [loading, setLoading] = useState(false)
+
+  const handleEndEarly = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/listings/end-early", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to end auction")
+      if (data.hasBids) {
+        toast.success("Auction ended! Sold to the highest bidder.")
+      } else {
+        toast.success("Auction ended early with no bids.")
+      }
+      onEnd()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to end auction")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm" className="w-full gap-2">
+          <StopCircle className="h-4 w-4" />
+          End Auction Early
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>End auction early?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {"If there are bids, the item will be sold to the highest bidder. This action cannot be undone."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleEndEarly} disabled={loading}>
+            {loading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{"Ending..."}</>
+            ) : (
+              "Confirm End Early"
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

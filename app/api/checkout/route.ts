@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { stripe } from "@/lib/stripe"
+import { getSettings } from "@/lib/settings"
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -10,8 +11,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
 
-  if (user.user_metadata?.role !== "buyer") {
-    return NextResponse.json({ error: "Only buyer accounts can purchase items" }, { status: 403 })
+  // Check email and phone verification
+  const { data: buyerProfile } = await supabase
+    .from("profiles")
+    .select("email_verified, phone_verified")
+    .eq("id", user.id)
+    .single()
+
+  if (!buyerProfile?.email_verified || !buyerProfile?.phone_verified) {
+    const missing = []
+    if (!buyerProfile?.email_verified) missing.push("email")
+    if (!buyerProfile?.phone_verified) missing.push("phone number")
+    return NextResponse.json(
+      { error: `Please verify your ${missing.join(" and ")} before making purchases. Go to Dashboard > Profile to verify.` },
+      { status: 403 }
+    )
   }
 
   const body = await request.json()
@@ -32,7 +46,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Listing not found" }, { status: 404 })
   }
 
-  if (listing.status !== "active") {
+  // For auction wins, the listing is already sold/ended_early - verify the winner
+  if (type === "auction_win") {
+    if (!["sold", "ended_early"].includes(listing.status)) {
+      return NextResponse.json({ error: "This listing is not eligible for payment" }, { status: 400 })
+    }
+    if (listing.winner_id !== user.id) {
+      return NextResponse.json({ error: "You are not the winner of this auction" }, { status: 403 })
+    }
+  } else if (listing.status !== "active") {
     return NextResponse.json({ error: "This listing is no longer available" }, { status: 400 })
   }
 
@@ -41,13 +63,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Get platform settings
-  const { data: settings } = await supabase
-    .from("platform_settings")
-    .select("*")
-    .single()
+  const settings = await getSettings()
 
-  const buyerCommissionPct = settings?.buyer_commission_pct || 5
-  const sellerCommissionPct = settings?.seller_commission_pct || 5
+  const taxPct = settings.tax_rate
+  const commissionPct = settings.commission_rate
 
   // Determine price based on type
   let itemPrice: number
@@ -56,14 +75,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This listing does not have a buy now price" }, { status: 400 })
     }
     itemPrice = listing.buy_now_price
+  } else if (type === "auction_win") {
+    // Won auction - use current bid (the winning price)
+    itemPrice = listing.current_bid || listing.starting_price
   } else {
-    // Auction win - use current bid
+    // Generic auction payment
     itemPrice = listing.current_bid || listing.starting_price
   }
 
-  const buyerFee = Math.round(itemPrice * (buyerCommissionPct / 100))
-  const sellerFee = Math.round(itemPrice * (sellerCommissionPct / 100))
-  const totalAmount = itemPrice + buyerFee
+  // Calculate fees: Item Price + 20% Tax + 15% Commission
+  const taxAmount = Math.round(itemPrice * (taxPct / 100))
+  const commissionAmount = Math.round(itemPrice * (commissionPct / 100))
+  const totalAmount = itemPrice + taxAmount + commissionAmount
 
   // Create Stripe checkout session
   const session = await stripe.checkout.sessions.create({
@@ -72,7 +95,7 @@ export async function POST(request: NextRequest) {
     line_items: [
       {
         price_data: {
-          currency: settings?.currency?.toLowerCase() || "usd",
+          currency: settings.platform_currency.toLowerCase(),
           product_data: {
             name: listing.title,
             description: `Auction item - ${listing.condition} condition`,
@@ -83,12 +106,23 @@ export async function POST(request: NextRequest) {
       },
       {
         price_data: {
-          currency: settings?.currency?.toLowerCase() || "usd",
+          currency: settings.platform_currency.toLowerCase(),
           product_data: {
-            name: `Buyer Commission (${buyerCommissionPct}%)`,
+            name: `Tax (${taxPct}%)`,
+            description: "Value added tax",
+          },
+          unit_amount: taxAmount,
+        },
+        quantity: 1,
+      },
+      {
+        price_data: {
+          currency: settings.platform_currency.toLowerCase(),
+          product_data: {
+            name: `Commission (${commissionPct}%)`,
             description: "Platform service fee",
           },
-          unit_amount: buyerFee,
+          unit_amount: commissionAmount,
         },
         quantity: 1,
       },
@@ -98,8 +132,8 @@ export async function POST(request: NextRequest) {
       buyer_id: user.id,
       seller_id: listing.seller_id,
       item_price: itemPrice.toString(),
-      buyer_fee: buyerFee.toString(),
-      seller_fee: sellerFee.toString(),
+      tax_amount: taxAmount.toString(),
+      commission_amount: commissionAmount.toString(),
       total_amount: totalAmount.toString(),
       purchase_type: type,
     },
