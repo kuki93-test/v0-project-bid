@@ -108,13 +108,13 @@ export default function SignUpPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
               <Gavel className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-[family-name:var(--font-heading)] text-xl font-bold">BidVault</span>
+            <span className="font-[family-name:var(--font-heading)] text-xl font-bold">Willbieten</span>
           </Link>
           <Card className="w-full">
             <CardHeader>
               <CardTitle className="text-2xl">Create an account</CardTitle>
               <CardDescription>
-                Join BidVault to start buying or selling
+                Join Willbieten to start buying or selling
               </CardDescription>
             </CardHeader>
             <CardContent>

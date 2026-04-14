@@ -34,7 +34,7 @@ export function Footer() {
                 <Gavel className="h-4 w-4 text-primary-foreground" />
               </div>
               <span className="font-[family-name:var(--font-heading)] text-lg font-bold text-foreground">
-                BidVault
+                Willbieten GmbH
               </span>
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
@@ -85,7 +85,7 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 md:flex-row">
           <p className="text-xs text-muted-foreground">
-            {"© 2026 BidVault. All rights reserved."}
+            {"© 2026 Willbieten GmbH. All rights reserved."}
           </p>
           <div className="flex gap-6">
             <Link href="#" className="text-xs text-muted-foreground transition-colors hover:text-foreground">

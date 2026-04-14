@@ -74,7 +74,7 @@ export async function FeaturedListings() {
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
             <p className="text-lg font-medium text-foreground">No listings yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Be the first to list an item on BidVault
+              Be the first to list an item on Willbieten
             </p>
             <Button asChild className="mt-4">
               <Link href="/auth/sign-up">Become a Seller</Link>

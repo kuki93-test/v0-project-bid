@@ -8,7 +8,7 @@ const _inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const _spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" });
 
 export const metadata: Metadata = {
-  title: 'BidVault - Online Auction Marketplace',
+  title: 'Willbieten GmbH - Online Auction Marketplace',
   description: 'The trusted online auction platform. Buy and sell with confidence. Secure payments, verified users, and transparent commissions.',
   generator: 'v0.app',
   icons: {

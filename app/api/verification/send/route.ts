@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
   // In production, send via email/SMS service (SendGrid, Twilio, etc.)
   // Log OTP for development
-  console.log(`[BidVault] OTP for ${type} (${destination}): ${code}`)
+  console.log(`[Willbieten] OTP for ${type} (${destination}): ${code}`)
 
   return NextResponse.json({
     success: true,

@@ -26,8 +26,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .single()
 
   return {
-    title: listing ? `${listing.title} - BidVault` : "Listing - BidVault",
-    description: listing?.description || "View this listing on BidVault",
+    title: listing ? `${listing.title} - Willbieten GmbH` : "Listing - Willbieten GmbH",
+    description: listing?.description || "View this listing on Willbieten",
   }
 }
 

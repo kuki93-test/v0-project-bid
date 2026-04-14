@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   })
 
   if (error) {
-    console.error("[BidVault Notification] Insert error:", error)
+    console.error("[Willbieten Notification] Insert error:", error)
     return NextResponse.json({ error: "Failed to store notification" }, { status: 500 })
   }
 

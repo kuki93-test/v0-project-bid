@@ -15,7 +15,7 @@ const DEFAULTS: PlatformSettings = {
   seller_commission_rate: 5,
   min_bid_increment: 1,
   max_auction_duration_days: 30,
-  platform_name: "BidVault",
+  platform_name: "Willbieten GmbH",
   platform_currency: "USD",
   early_end_fee_pct: 2,
 }

@@ -148,7 +148,7 @@ export default function VerifyPage() {
               <Gavel className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-[family-name:var(--font-heading)] text-xl font-bold">
-              BidVault
+              Willbieten
             </span>
           </Link>
 
@@ -183,7 +183,7 @@ export default function VerifyPage() {
                 </div>
                 <CardTitle className="text-2xl">All verified!</CardTitle>
                 <CardDescription>
-                  Your email and phone number have been verified. You can now fully use BidVault.
+                  Your email and phone number have been verified. You can now fully use Willbieten.
                 </CardDescription>
               </CardHeader>
               <CardContent>

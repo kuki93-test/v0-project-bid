@@ -84,7 +84,7 @@ export function Navbar() {
               <Gavel className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-[family-name:var(--font-heading)] text-xl font-bold text-foreground">
-              BidVault
+              Willbieten
             </span>
           </Link>
 
