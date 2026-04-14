@@ -95,7 +95,9 @@ export default function SignUpPage() {
       return
     }
 
-    if (!captchaToken) {
+    // Only require CAPTCHA if it's configured
+    const captchaConfigured = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    if (captchaConfigured && !captchaToken) {
       setError("Please complete the CAPTCHA verification")
       setIsLoading(false)
       return
