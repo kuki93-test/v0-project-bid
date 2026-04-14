@@ -7,7 +7,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Missing token" }, { status: 400 })
   }
 
-  const secretKey = process.env.TURNSTILE_SECRET_KEY || "1x0000000000000000000000000000000AA"
+  const secretKey = process.env.TURNSTILE_SECRET_KEY
+  if (!secretKey) {
+    console.error("TURNSTILE_SECRET_KEY environment variable is not set")
+    return NextResponse.json({ success: false, error: "CAPTCHA not configured" }, { status: 500 })
+  }
 
   const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
     method: "POST",
