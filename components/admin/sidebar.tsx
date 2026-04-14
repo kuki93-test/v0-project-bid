@@ -12,11 +12,13 @@ import {
   Tag,
   Shield,
   ArrowLeft,
+  Building2,
 } from "lucide-react"
 
 const navItems = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/companies", label: "Companies", icon: Building2 },
   { href: "/admin/listings", label: "Listings", icon: Package },
   { href: "/admin/transactions", label: "Transactions", icon: DollarSign },
   { href: "/admin/categories", label: "Categories", icon: Tag },

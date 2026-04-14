@@ -16,16 +16,19 @@ import {
   InputOTPSeparator,
 } from "@/components/ui/input-otp"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { Gavel, Mail, Phone, CheckCircle2, Loader2 } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState, Suspense } from "react"
+import { Gavel, Mail, Phone, CheckCircle2, Loader2, Building2, Clock } from "lucide-react"
 import { toast } from "sonner"
 
-type Step = "email" | "phone" | "done"
+type Step = "email" | "phone" | "done" | "company_pending"
 
-export default function VerifyPage() {
+function VerifyContent() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const accountType = searchParams.get("type") || "personal"
+
   const [step, setStep] = useState<Step>("email")
   const [code, setCode] = useState("")
   const [verifying, setVerifying] = useState(false)
@@ -36,6 +39,7 @@ export default function VerifyPage() {
   const [phone, setPhone] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [devCode, setDevCode] = useState<string | null>(null)
+  const [companyStatus, setCompanyStatus] = useState<string | null>(null)
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -44,21 +48,37 @@ export default function VerifyPage() {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("email_verified, phone_verified, phone")
+        .select("email_verified, phone_verified, phone, account_type, company_status, email_verified_at, phone_verified_at")
         .eq("id", user.id)
         .single()
 
       if (profile) {
-        setEmailVerified(profile.email_verified ?? false)
-        setPhoneVerified(profile.phone_verified ?? false)
+        const isEmailVerified = !!profile.email_verified_at || profile.email_verified
+        const isPhoneVerified = !!profile.phone_verified_at || profile.phone_verified
+        
+        setEmailVerified(isEmailVerified)
+        setPhoneVerified(isPhoneVerified)
         setPhone(profile.phone)
+        setCompanyStatus(profile.company_status)
 
-        if (profile.email_verified && profile.phone_verified) {
-          setStep("done")
-        } else if (profile.email_verified) {
-          setStep("phone")
+        // Company accounts go to pending screen after verification
+        if (profile.account_type === "company") {
+          if (isEmailVerified && isPhoneVerified) {
+            setStep("company_pending")
+          } else if (isEmailVerified) {
+            setStep("phone")
+          } else {
+            setStep("email")
+          }
         } else {
-          setStep("email")
+          // Personal accounts
+          if (isEmailVerified && isPhoneVerified) {
+            setStep("done")
+          } else if (isEmailVerified) {
+            setStep("phone")
+          } else {
+            setStep("email")
+          }
         }
       }
       setLoading(false)
@@ -116,13 +136,13 @@ export default function VerifyPage() {
       if (step === "email") {
         setEmailVerified(true)
         if (phoneVerified) {
-          setStep("done")
+          setStep(accountType === "company" ? "company_pending" : "done")
         } else {
           setStep("phone")
         }
       } else if (step === "phone") {
         setPhoneVerified(true)
-        setStep("done")
+        setStep(accountType === "company" ? "company_pending" : "done")
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Verification failed")
@@ -152,30 +172,114 @@ export default function VerifyPage() {
             </span>
           </Link>
 
-          {/* Progress indicators */}
-          <div className="flex items-center gap-3">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-              emailVerified
-                ? "bg-accent text-accent-foreground"
-                : step === "email"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-            }`}>
-              {emailVerified ? <CheckCircle2 className="h-4 w-4" /> : "1"}
+          {/* Progress indicators for personal accounts */}
+          {accountType === "personal" && step !== "done" && (
+            <div className="flex items-center gap-3">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                emailVerified
+                  ? "bg-accent text-accent-foreground"
+                  : step === "email"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+              }`}>
+                {emailVerified ? <CheckCircle2 className="h-4 w-4" /> : "1"}
+              </div>
+              <div className="h-px w-8 bg-border" />
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                phoneVerified
+                  ? "bg-accent text-accent-foreground"
+                  : step === "phone"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+              }`}>
+                {phoneVerified ? <CheckCircle2 className="h-4 w-4" /> : "2"}
+              </div>
             </div>
-            <div className="h-px w-8 bg-border" />
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-              phoneVerified
-                ? "bg-accent text-accent-foreground"
-                : step === "phone"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-            }`}>
-              {phoneVerified ? <CheckCircle2 className="h-4 w-4" /> : "2"}
-            </div>
-          </div>
+          )}
 
-          {step === "done" ? (
+          {/* Progress indicators for company accounts */}
+          {accountType === "company" && step !== "company_pending" && (
+            <div className="flex items-center gap-3">
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                emailVerified
+                  ? "bg-accent text-accent-foreground"
+                  : step === "email"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+              }`}>
+                {emailVerified ? <CheckCircle2 className="h-4 w-4" /> : "1"}
+              </div>
+              <div className="h-px w-8 bg-border" />
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                phoneVerified
+                  ? "bg-accent text-accent-foreground"
+                  : step === "phone"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+              }`}>
+                {phoneVerified ? <CheckCircle2 className="h-4 w-4" /> : "2"}
+              </div>
+              <div className="h-px w-8 bg-border" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium bg-muted text-muted-foreground">
+                3
+              </div>
+            </div>
+          )}
+
+          {/* Company Pending Approval */}
+          {step === "company_pending" && (
+            <Card className="w-full">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                  {companyStatus === "approved" ? (
+                    <CheckCircle2 className="h-6 w-6 text-green-600" />
+                  ) : companyStatus === "rejected" ? (
+                    <Building2 className="h-6 w-6 text-destructive" />
+                  ) : (
+                    <Clock className="h-6 w-6 text-amber-600" />
+                  )}
+                </div>
+                <CardTitle className="text-2xl">
+                  {companyStatus === "approved" 
+                    ? "Application Approved!" 
+                    : companyStatus === "rejected"
+                      ? "Application Rejected"
+                      : "Application Under Review"
+                  }
+                </CardTitle>
+                <CardDescription>
+                  {companyStatus === "approved" ? (
+                    "Your company account has been approved. You can now start selling on Willbieten."
+                  ) : companyStatus === "rejected" ? (
+                    "Unfortunately, your company application was not approved. Please contact support for more information."
+                  ) : (
+                    "Your email and phone have been verified. Our team is now reviewing your company registration documents. This usually takes 1-2 business days."
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {companyStatus === "approved" ? (
+                  <Button className="w-full" asChild>
+                    <Link href="/dashboard">Go to Dashboard</Link>
+                  </Button>
+                ) : (
+                  <>
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        We will send you an email notification once your application has been reviewed.
+                      </p>
+                    </div>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href="/">Return to Homepage</Link>
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Personal Account Done */}
+          {step === "done" && (
             <Card className="w-full">
               <CardHeader className="text-center">
                 <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent/20">
@@ -192,7 +296,10 @@ export default function VerifyPage() {
                 </Button>
               </CardContent>
             </Card>
-          ) : (
+          )}
+
+          {/* Verification Form */}
+          {(step === "email" || step === "phone") && (
             <Card className="w-full">
               <CardHeader className="text-center">
                 <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -270,31 +377,30 @@ export default function VerifyPage() {
                   </Button>
                 </div>
 
-                {step === "email" && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="text-xs text-muted-foreground"
-                    onClick={() => router.push("/dashboard")}
-                  >
-                    Skip for now
-                  </Button>
-                )}
-                {step === "phone" && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="text-xs text-muted-foreground"
-                    onClick={() => router.push("/dashboard")}
-                  >
-                    Skip for now
-                  </Button>
-                )}
+                {/* No skip option - verification is mandatory */}
+                <p className="text-xs text-center text-muted-foreground">
+                  {accountType === "company" 
+                    ? "Verification is required before your company application can be reviewed."
+                    : "Both email and phone verification are required to use Willbieten."
+                  }
+                </p>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
     </div>
+  )
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-svh w-full items-center justify-center bg-secondary">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <VerifyContent />
+    </Suspense>
   )
 }

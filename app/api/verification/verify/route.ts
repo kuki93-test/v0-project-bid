@@ -43,8 +43,11 @@ export async function POST(request: NextRequest) {
     .update({ used: true })
     .eq("id", verificationCode.id)
 
-  // Update profile verification status
-  const updateField = type === "email" ? { email_verified: true } : { phone_verified: true }
+  // Update profile verification status with timestamp
+  const now = new Date().toISOString()
+  const updateField = type === "email" 
+    ? { email_verified: true, email_verified_at: now } 
+    : { phone_verified: true, phone_verified_at: now }
   const { error: updateError } = await supabase
     .from("profiles")
     .update(updateField)
