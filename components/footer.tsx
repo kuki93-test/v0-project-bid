@@ -15,10 +15,10 @@ const footerLinks = {
     { label: "Sell an Item", href: "/dashboard/listings/new" },
   ],
   support: [
-    { label: "How It Works", href: "/#how-it-works" },
-    { label: "Fees & Commissions", href: "/#fees" },
-    { label: "Safety Tips", href: "#" },
-    { label: "Contact Us", href: "#" },
+    { label: "How It Works", href: "/" },
+    { label: "Fees & Commissions", href: "/" },
+    { label: "Safety Tips", href: "/" },
+    { label: "Contact Us", href: "/" },
   ],
 }
 
